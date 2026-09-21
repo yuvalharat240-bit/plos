@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- FINDING (pre-Milestone-8 audit, 2026-09-21): this custom
+	     Info.plist (added to fix the NSAllowsLocalNetworking gap below)
+	     was missing essentially every standard bundle key a real install
+	     needs — not just CFBundleIdentifier, but CFBundleExecutable,
+	     CFBundlePackageType, CFBundleVersion, CFBundleShortVersionString,
+	     CFBundleName too. A manually-provided Info.plist doesn't get
+	     these synthesized automatically the way GENERATE_INFOPLIST_FILE's
+	     own default does. Found because it broke installing the app on a
+	     real simulator (`plutil` couldn't find CFBundleIdentifier at
+	     all) — this would have blocked every real install path (device,
+	     TestFlight, App Store), not just this one; the app had never
+	     actually been installed anywhere before this session. -->
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleDisplayName</key>
+	<string>plos</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<!--
+	  GAP found during the Phase 0/1/2 audit, not present when this file
+	  didn't exist: with no Info.plist, GENERATE_INFOPLIST_FILE=YES
+	  synthesized one with ATS's default (blocks all cleartext HTTP).
+	  PlosAPI.baseURL defaults to http://localhost:3000 (docs/09
+	  Milestone 2's local-dev target) — every request would have failed
+	  at the network layer the first time this actually ran on a
+	  simulator/device, App Transport Security block, not a bug in the
+	  Swift or backend code either side would have surfaced clearly.
+	  NSAllowsLocalNetworking is the narrow, correct fix (added in iOS
+	  10 specifically for local-network/dev traffic) — it does NOT allow
+	  arbitrary internet cleartext HTTP, only loopback/local-network
+	  addresses. Remove or restrict further once Milestone 8 points
+	  PlosAPI.baseURL at a real HTTPS-only deployment.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<!-- docs/09 Milestone 3: read-only HealthKit (sleep, heart rate,
+	     workouts) and EventKit calendar access — no write usage string
+	     needed since this app never writes to either store. -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>plos reads your sleep, heart rate, and workout data to give you personalized insights about your recovery and training.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>plos reads your calendar's busy/free density to understand how much room your day has — it never reads event titles or details beyond that.</string>
+</dict>
+</plist>

@@ -1,0 +1,23 @@
+# Copy to terraform.tfvars and fill in. Never commit terraform.tfvars
+# itself (it's the natural place someone pastes anthropic_api_key into) —
+# add it to .gitignore before the first real apply.
+
+aws_region  = "us-east-1"
+environment = "staging"
+
+# Built and pushed by the deploy pipeline first — terraform apply will
+# fail loudly (by design, see variables.tf) if these are left unset.
+# container_image        = "123456789012.dkr.ecr.us-east-1.amazonaws.com/plos-staging-api:sha-abc1234"
+# migrate_container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/plos-staging-api:migrate-sha-abc1234"
+
+# Leave both empty to get an HTTP-only ALB (fine for a first skeleton
+# deploy with no real user data); fill in once a real domain exists.
+# domain_name     = "staging-api.plos.app"
+# route53_zone_id = "Z0123456789ABCDEFGHIJ"
+
+# Pass this via TF_VAR_anthropic_api_key instead of writing it here —
+# see this file's own header comment.
+# anthropic_api_key = "..."
+
+# apple_audience = "com.plos.app"          # once a real Apple Developer team is configured
+# webauthn_rp_id = "staging-api.plos.app"  # must match domain_name

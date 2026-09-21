@@ -1,0 +1,31 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+
+# Node / NestJS (apps/api)
+node_modules/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+
+# apps/api dev-only artifacts
+.embedded-postgres/
+.local-object-store/
+
+# iOS build output (xcodebuild -derivedDataPath)
+build_dd/
+
+# Terraform (infra/) — state and tfvars can hold real secrets/resource
+# IDs; never committed even after a real backend is configured.
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/terraform.tfvars
+infra/*.tfplan
+

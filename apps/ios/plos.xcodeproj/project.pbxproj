@@ -1,0 +1,271 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C2388F7F1E8248B4ADBE95DE /* plosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5FE037665562F05E71F490A /* plosApp.swift */; };
+		DA9A23DAB517FA7FA9C80E2D /* PlosDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 963DFC00F343E765011B1BBC /* PlosDesignSystem */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		7379CE09CB3348402678E9F7 /* plos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = plos.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5FE037665562F05E71F490A /* plosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = plosApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1300E1292F33A024E8156AC9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA9A23DAB517FA7FA9C80E2D /* PlosDesignSystem in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		02E8F765CCE45CE3F3E054BE = {
+			isa = PBXGroup;
+			children = (
+				DB006FE320E8690CE9F7127F /* plos */,
+				B5D326D13416B24C829F4089 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B5D326D13416B24C829F4089 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7379CE09CB3348402678E9F7 /* plos.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DB006FE320E8690CE9F7127F /* plos */ = {
+			isa = PBXGroup;
+			children = (
+				F5FE037665562F05E71F490A /* plosApp.swift */,
+			);
+			path = plos;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		21893EA107595248DB6BF817 /* plos */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1763D6C5C92F34B6F77C4A55 /* Build configuration list for PBXNativeTarget "plos" */;
+			buildPhases = (
+				00D12AA3BB58F51DBB7E5352 /* Sources */,
+				1300E1292F33A024E8156AC9 /* Frameworks */,
+				5373FBEF8A65B83A3D1A8BB3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = plos;
+			packageProductDependencies = (
+				963DFC00F343E765011B1BBC /* PlosDesignSystem */,
+			);
+			productName = plos;
+			productReference = 7379CE09CB3348402678E9F7 /* plos.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F85A81F748B3F86345E25865 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					21893EA107595248DB6BF817 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = C059AE0AA95CD1289A52AAB2 /* Build configuration list for PBXProject "plos" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 02E8F765CCE45CE3F3E054BE;
+			packageReferences = (
+				4AB7192E69712F232516E8C7 /* XCLocalSwiftPackageReference "PlosDesignSystem" */,
+			);
+			productRefGroup = B5D326D13416B24C829F4089 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				21893EA107595248DB6BF817 /* plos */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5373FBEF8A65B83A3D1A8BB3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		00D12AA3BB58F51DBB7E5352 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2388F7F1E8248B4ADBE95DE /* plosApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E8DA1E255F12EA474F6E8740 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1A8E22882DF7BEC8227E350D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		EE7CBAA849CF070E71846C58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;
+				CODE_SIGN_ENTITLEMENTS = plos/plos.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = plos/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.plos.app";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		63F0DC31DF0F44DBD6A86A26 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;
+				CODE_SIGN_ENTITLEMENTS = plos/plos.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = plos/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.plos.app";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C059AE0AA95CD1289A52AAB2 /* Build configuration list for PBXProject "plos" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8DA1E255F12EA474F6E8740 /* Debug */,
+				1A8E22882DF7BEC8227E350D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1763D6C5C92F34B6F77C4A55 /* Build configuration list for PBXNativeTarget "plos" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EE7CBAA849CF070E71846C58 /* Debug */,
+				63F0DC31DF0F44DBD6A86A26 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		4AB7192E69712F232516E8C7 /* XCLocalSwiftPackageReference "PlosDesignSystem" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = PlosDesignSystem;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		963DFC00F343E765011B1BBC /* PlosDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PlosDesignSystem;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F85A81F748B3F86345E25865 /* Project object */;
+}
