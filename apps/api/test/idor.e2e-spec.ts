@@ -13,20 +13,14 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { Client } from 'pg';
 import { randomUUID } from 'crypto';
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs';
-import { runner } from 'node-pg-migrate';
 import { generateKeyPair, exportJWK, SignJWT, createLocalJWKSet, KeyLike } from 'jose';
 import { AppModule } from '../src/app.module';
 import { APPLE_JWKS_RESOLVER, APPLE_ISSUER } from '../src/auth/apple-identity.service';
 import { ToolExecutorService } from '../src/agent/tools/tool-executor.service';
 import { TenantDatabaseService } from '../src/database/tenant-database.service';
+import { bootstrapTestPostgres, teardownTestPostgres, testSuperuserUrl, TEST_DB_NAME } from './support/postgres-test-harness';
 
 const PORT = 55439; // distinct from the other six suites' 55433-55438
-const DB_NAME = 'plos_test';
-const SUPERUSER = 'postgres';
-const SUPERUSER_PASSWORD = 'postgres_test_only';
 const APP_ROLE_PASSWORD = 'plos_app_dev_only';
 
 describe('Milestone 7: IDOR suite for cancel_scheduled_workout (real HTTP, real Postgres)', () => {
@@ -36,8 +30,7 @@ describe('Milestone 7: IDOR suite for cancel_scheduled_workout (real HTTP, real 
   let dataDir: string;
   let privateKey: KeyLike;
 
-  const superuserUrl = `postgres://${SUPERUSER}:${SUPERUSER_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
-  const appUrl = `postgres://plos_app:${APP_ROLE_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
+  const appUrl = `postgres://plos_app:${APP_ROLE_PASSWORD}@localhost:${PORT}/${TEST_DB_NAME}`;
 
   beforeAll(async () => {
     // This suite signs in ~10 distinct users — comfortably over the
@@ -47,41 +40,9 @@ describe('Milestone 7: IDOR suite for cancel_scheduled_workout (real HTTP, real 
     // module" pattern as agent.e2e-spec.ts's own rate-limit test.
     process.env.PLOS_AUTH_RATE_LIMIT = '1000';
 
-    const dynamicImport = new Function(
-      'specifier',
-      'return import(specifier)',
-    ) as (specifier: string) => Promise<{ default: typeof import('embedded-postgres').default }>;
-    const { default: EmbeddedPostgres } = await dynamicImport('embedded-postgres');
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plos-pg-m7-idor-'));
+    ({ pg, dataDir } = await bootstrapTestPostgres(PORT));
 
-    pg = new EmbeddedPostgres({
-      databaseDir: dataDir,
-      user: SUPERUSER,
-      password: SUPERUSER_PASSWORD,
-      port: PORT,
-      persistent: false,
-    });
-    await pg.initialise();
-    await pg.start();
-    await pg.createDatabase(DB_NAME);
-
-    try {
-      await runner({
-        databaseUrl: superuserUrl,
-        dir: path.join(__dirname, '..', 'migrations'),
-        direction: 'up',
-        migrationsTable: 'pgmigrations',
-        singleTransaction: false,
-        log: () => {},
-      });
-    } catch (err) {
-      const message = String((err as Error)?.message ?? err);
-      if (!/extension "vector"|vector\.control|could not open extension control file/i.test(message)) {
-        throw err;
-      }
-    }
-
-    superuserClient = new Client({ connectionString: superuserUrl });
+    superuserClient = new Client({ connectionString: testSuperuserUrl(PORT) });
     await superuserClient.connect();
 
     process.env.DATABASE_URL = appUrl;
@@ -106,8 +67,7 @@ describe('Milestone 7: IDOR suite for cancel_scheduled_workout (real HTTP, real 
   afterAll(async () => {
     await app?.close();
     await superuserClient?.end();
-    await pg?.stop();
-    fs.rmSync(dataDir, { recursive: true, force: true });
+    await teardownTestPostgres(pg, dataDir);
   });
 
   async function signIn(sub: string): Promise<{ accessToken: string; userId: string }> {

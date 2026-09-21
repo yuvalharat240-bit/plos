@@ -16,16 +16,10 @@
  */
 import { Client } from 'pg';
 import { randomUUID } from 'crypto';
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs';
-import { runner } from 'node-pg-migrate';
 import { TenantDatabaseService } from '../src/database/tenant-database.service';
+import { bootstrapTestPostgres, teardownTestPostgres, testSuperuserUrl, TEST_DB_NAME } from './support/postgres-test-harness';
 
 const PORT = 55433;
-const DB_NAME = 'plos_test';
-const SUPERUSER = 'postgres';
-const SUPERUSER_PASSWORD = 'postgres_test_only';
 const APP_ROLE = 'plos_app';
 const APP_ROLE_PASSWORD = 'plos_app_dev_only'; // matches 001_roles_and_extensions.js
 
@@ -35,86 +29,12 @@ describe('RLS tenant isolation (docs/04-database-schema.md §10)', () => {
   let appService: TenantDatabaseService;
   let dataDir: string;
 
-  const superuserUrl = `postgres://${SUPERUSER}:${SUPERUSER_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
-  const appUrl = `postgres://${APP_ROLE}:${APP_ROLE_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
+  const appUrl = `postgres://${APP_ROLE}:${APP_ROLE_PASSWORD}@localhost:${PORT}/${TEST_DB_NAME}`;
 
   beforeAll(async () => {
-    // embedded-postgres is a pure-ESM package ("type": "module"). ts-jest
-    // compiling to CommonJS downlevels a literal `await import(...)` into
-    // a `require()` call, which cannot load an ESM module and fails with
-    // "Cannot use import statement outside a module". Constructing the
-    // import at runtime via `Function` bypasses TypeScript's static
-    // rewrite (it never sees a literal `import(...)` token to transform)
-    // — the standard workaround for this CJS-consumes-ESM combination.
-    //
-    // FOUND in Milestone 3, once a third e2e spec file used this same
-    // pattern: running multiple such spec files together under Jest's
-    // `--runInBand` (one shared OS process) intermittently threw "Test
-    // environment has been torn down" from INSIDE one file's stack trace
-    // while pointing at a DIFFERENT file's `new Function(...)` — i.e. one
-    // file's dynamically-compiled import shim got invoked against
-    // another, already-torn-down file's Jest environment. Each spec file
-    // has its own dedicated port and fully independent embedded-postgres
-    // lifecycle, so there was never a real reason to force them into one
-    // process — removing `--runInBand` (package.json's `test:rls`) so
-    // Jest runs each file as a genuinely separate worker process fixed
-    // it reliably. If a fourth e2e spec file is ever added, don't
-    // reintroduce `--runInBand` without re-verifying this.
-    const dynamicImport = new Function(
-      'specifier',
-      'return import(specifier)',
-    ) as (specifier: string) => Promise<{ default: typeof import('embedded-postgres').default }>;
-    const { default: EmbeddedPostgres } = await dynamicImport('embedded-postgres');
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plos-pg-'));
+    ({ pg, dataDir } = await bootstrapTestPostgres(PORT));
 
-    pg = new EmbeddedPostgres({
-      databaseDir: dataDir,
-      user: SUPERUSER,
-      password: SUPERUSER_PASSWORD,
-      port: PORT,
-      persistent: false,
-    });
-    await pg.initialise();
-    await pg.start();
-    await pg.createDatabase(DB_NAME);
-
-    try {
-      await runner({
-        databaseUrl: superuserUrl,
-        dir: path.join(__dirname, '..', 'migrations'),
-        direction: 'up',
-        migrationsTable: 'pgmigrations',
-        // Test-only override — production/dev migration runs keep the
-        // default (true): all-or-nothing. Here it lets every other
-        // migration commit independently of embeddings/pgvector, which is
-        // expected to fail in an embedded test Postgres that doesn't
-        // bundle third-party extensions. See 999_embeddings.js's header.
-        singleTransaction: false,
-        log: () => {
-          /* quiet — this test asserts on outcomes, not migration chatter */
-        },
-      });
-    } catch (err) {
-      const message = String((err as Error)?.message ?? err);
-      const isPgvectorMissing =
-        /extension "vector"|vector\.control|could not open extension control file/i.test(
-          message,
-        );
-      if (!isPgvectorMissing) {
-        throw err; // a real failure — never mask it
-      }
-      // eslint-disable-next-line no-console
-      console.warn(
-        '[rls.e2e-spec] pgvector unavailable in this embedded test Postgres — ' +
-          'migration 021 (embeddings) did not apply. Migrations 001-020 and 022, ' +
-          'including every RLS policy, already committed independently ' +
-          '(singleTransaction: false for this test run only). RDS supports ' +
-          'pgvector natively (ADR D5); embeddings is unused at MVP regardless ' +
-          '(docs/08-mvp-definition.md §9.1). Continuing with RLS verification.',
-      );
-    }
-
-    superuserClient = new Client({ connectionString: superuserUrl });
+    superuserClient = new Client({ connectionString: testSuperuserUrl(PORT) });
     await superuserClient.connect();
 
     process.env.DATABASE_URL = appUrl;
@@ -124,8 +44,7 @@ describe('RLS tenant isolation (docs/04-database-schema.md §10)', () => {
   afterAll(async () => {
     await superuserClient?.end();
     await appService?.onModuleDestroy();
-    await pg?.stop();
-    fs.rmSync(dataDir, { recursive: true, force: true });
+    await teardownTestPostgres(pg, dataDir);
   });
 
   let userA: string;

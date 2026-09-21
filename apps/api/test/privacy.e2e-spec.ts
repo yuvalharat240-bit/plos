@@ -15,15 +15,12 @@ import { Client } from 'pg';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import { runner } from 'node-pg-migrate';
 import { generateKeyPair, exportJWK, SignJWT, createLocalJWKSet, KeyLike } from 'jose';
 import { AppModule } from '../src/app.module';
 import { APPLE_JWKS_RESOLVER, APPLE_ISSUER } from '../src/auth/apple-identity.service';
+import { bootstrapTestPostgres, teardownTestPostgres, testSuperuserUrl, TEST_DB_NAME } from './support/postgres-test-harness';
 
 const PORT = 55438; // distinct from the other five suites' 55433-55437
-const DB_NAME = 'plos_test';
-const SUPERUSER = 'postgres';
-const SUPERUSER_PASSWORD = 'postgres_test_only';
 const APP_ROLE_PASSWORD = 'plos_app_dev_only';
 
 describe('Milestone 6: Privacy & data-control (real HTTP, real Postgres)', () => {
@@ -33,8 +30,7 @@ describe('Milestone 6: Privacy & data-control (real HTTP, real Postgres)', () =>
   let dataDir: string;
   let privateKey: KeyLike;
 
-  const superuserUrl = `postgres://${SUPERUSER}:${SUPERUSER_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
-  const appUrl = `postgres://plos_app:${APP_ROLE_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
+  const appUrl = `postgres://plos_app:${APP_ROLE_PASSWORD}@localhost:${PORT}/${TEST_DB_NAME}`;
 
   beforeAll(async () => {
     // This suite signs in ~9 distinct users across its sub-describes —
@@ -44,41 +40,9 @@ describe('Milestone 6: Privacy & data-control (real HTTP, real Postgres)', () =>
     // testing module" pattern as agent.e2e-spec.ts's own rate-limit test.
     process.env.PLOS_AUTH_RATE_LIMIT = '1000';
 
-    const dynamicImport = new Function(
-      'specifier',
-      'return import(specifier)',
-    ) as (specifier: string) => Promise<{ default: typeof import('embedded-postgres').default }>;
-    const { default: EmbeddedPostgres } = await dynamicImport('embedded-postgres');
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plos-pg-m6-'));
+    ({ pg, dataDir } = await bootstrapTestPostgres(PORT));
 
-    pg = new EmbeddedPostgres({
-      databaseDir: dataDir,
-      user: SUPERUSER,
-      password: SUPERUSER_PASSWORD,
-      port: PORT,
-      persistent: false,
-    });
-    await pg.initialise();
-    await pg.start();
-    await pg.createDatabase(DB_NAME);
-
-    try {
-      await runner({
-        databaseUrl: superuserUrl,
-        dir: path.join(__dirname, '..', 'migrations'),
-        direction: 'up',
-        migrationsTable: 'pgmigrations',
-        singleTransaction: false,
-        log: () => {},
-      });
-    } catch (err) {
-      const message = String((err as Error)?.message ?? err);
-      if (!/extension "vector"|vector\.control|could not open extension control file/i.test(message)) {
-        throw err;
-      }
-    }
-
-    superuserClient = new Client({ connectionString: superuserUrl });
+    superuserClient = new Client({ connectionString: testSuperuserUrl(PORT) });
     await superuserClient.connect();
 
     process.env.DATABASE_URL = appUrl;
@@ -104,8 +68,7 @@ describe('Milestone 6: Privacy & data-control (real HTTP, real Postgres)', () =>
   afterAll(async () => {
     await app?.close();
     await superuserClient?.end();
-    await pg?.stop();
-    fs.rmSync(dataDir, { recursive: true, force: true });
+    await teardownTestPostgres(pg, dataDir);
     fs.rmSync(process.env.PLOS_LOCAL_OBJECT_STORE_DIR!, { recursive: true, force: true });
   });
 

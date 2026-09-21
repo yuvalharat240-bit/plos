@@ -11,18 +11,12 @@ import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { Client } from 'pg';
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs';
-import { runner } from 'node-pg-migrate';
 import { generateKeyPair, exportJWK, SignJWT, createLocalJWKSet } from 'jose';
 import { AppModule } from '../src/app.module';
 import { APPLE_JWKS_RESOLVER, APPLE_ISSUER } from '../src/auth/apple-identity.service';
+import { bootstrapTestPostgres, teardownTestPostgres, testSuperuserUrl, TEST_DB_NAME } from './support/postgres-test-harness';
 
 const PORT = 55435; // distinct from the other two suites' 55433/55434
-const DB_NAME = 'plos_test';
-const SUPERUSER = 'postgres';
-const SUPERUSER_PASSWORD = 'postgres_test_only';
 const APP_ROLE_PASSWORD = 'plos_app_dev_only';
 
 describe('Milestone 3: HealthKit + Calendar sync (real HTTP, real Postgres)', () => {
@@ -33,45 +27,12 @@ describe('Milestone 3: HealthKit + Calendar sync (real HTTP, real Postgres)', ()
   let accessToken: string;
   let userId: string;
 
-  const superuserUrl = `postgres://${SUPERUSER}:${SUPERUSER_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
-  const appUrl = `postgres://plos_app:${APP_ROLE_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
+  const appUrl = `postgres://plos_app:${APP_ROLE_PASSWORD}@localhost:${PORT}/${TEST_DB_NAME}`;
 
   beforeAll(async () => {
-    const dynamicImport = new Function(
-      'specifier',
-      'return import(specifier)',
-    ) as (specifier: string) => Promise<{ default: typeof import('embedded-postgres').default }>;
-    const { default: EmbeddedPostgres } = await dynamicImport('embedded-postgres');
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plos-pg-m3-'));
+    ({ pg, dataDir } = await bootstrapTestPostgres(PORT));
 
-    pg = new EmbeddedPostgres({
-      databaseDir: dataDir,
-      user: SUPERUSER,
-      password: SUPERUSER_PASSWORD,
-      port: PORT,
-      persistent: false,
-    });
-    await pg.initialise();
-    await pg.start();
-    await pg.createDatabase(DB_NAME);
-
-    try {
-      await runner({
-        databaseUrl: superuserUrl,
-        dir: path.join(__dirname, '..', 'migrations'),
-        direction: 'up',
-        migrationsTable: 'pgmigrations',
-        singleTransaction: false,
-        log: () => {},
-      });
-    } catch (err) {
-      const message = String((err as Error)?.message ?? err);
-      if (!/extension "vector"|vector\.control|could not open extension control file/i.test(message)) {
-        throw err;
-      }
-    }
-
-    superuserClient = new Client({ connectionString: superuserUrl });
+    superuserClient = new Client({ connectionString: testSuperuserUrl(PORT) });
     await superuserClient.connect();
 
     process.env.DATABASE_URL = appUrl;
@@ -112,8 +73,7 @@ describe('Milestone 3: HealthKit + Calendar sync (real HTTP, real Postgres)', ()
   afterAll(async () => {
     await app?.close();
     await superuserClient?.end();
-    await pg?.stop();
-    fs.rmSync(dataDir, { recursive: true, force: true });
+    await teardownTestPostgres(pg, dataDir);
   });
 
   describe('Health sync', () => {

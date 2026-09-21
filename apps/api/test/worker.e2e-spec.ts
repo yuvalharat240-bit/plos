@@ -22,19 +22,13 @@
  */
 import { Client } from 'pg';
 import { randomUUID } from 'crypto';
-import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs';
-import { runner } from 'node-pg-migrate';
 import { TenantDatabaseService } from '../src/database/tenant-database.service';
 import { BaselineService } from '../src/worker/baseline.service';
 import { CalendarDensityService } from '../src/worker/calendar-density.service';
 import { WINDOW_DAYS } from '../src/worker/metric-definitions';
+import { bootstrapTestPostgres, teardownTestPostgres, testSuperuserUrl, TEST_DB_NAME } from './support/postgres-test-harness';
 
 const PORT = 55436; // distinct from the other three suites' 55433-55435
-const DB_NAME = 'plos_test';
-const SUPERUSER = 'postgres';
-const SUPERUSER_PASSWORD = 'postgres_test_only';
 const WORKER_ROLE_PASSWORD = 'plos_worker_dev_only';
 
 describe('Milestone 4: Personal Baseline Engine / worker (real Postgres)', () => {
@@ -45,8 +39,7 @@ describe('Milestone 4: Personal Baseline Engine / worker (real Postgres)', () =>
   let calendarDensityService: CalendarDensityService;
   let dataDir: string;
 
-  const superuserUrl = `postgres://${SUPERUSER}:${SUPERUSER_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
-  const workerUrl = `postgres://plos_worker:${WORKER_ROLE_PASSWORD}@localhost:${PORT}/${DB_NAME}`;
+  const workerUrl = `postgres://plos_worker:${WORKER_ROLE_PASSWORD}@localhost:${PORT}/${TEST_DB_NAME}`;
 
   let userA: string;
   let userB: string;
@@ -80,41 +73,9 @@ describe('Milestone 4: Personal Baseline Engine / worker (real Postgres)', () =>
   }
 
   beforeAll(async () => {
-    const dynamicImport = new Function(
-      'specifier',
-      'return import(specifier)',
-    ) as (specifier: string) => Promise<{ default: typeof import('embedded-postgres').default }>;
-    const { default: EmbeddedPostgres } = await dynamicImport('embedded-postgres');
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plos-pg-m4-'));
+    ({ pg, dataDir } = await bootstrapTestPostgres(PORT));
 
-    pg = new EmbeddedPostgres({
-      databaseDir: dataDir,
-      user: SUPERUSER,
-      password: SUPERUSER_PASSWORD,
-      port: PORT,
-      persistent: false,
-    });
-    await pg.initialise();
-    await pg.start();
-    await pg.createDatabase(DB_NAME);
-
-    try {
-      await runner({
-        databaseUrl: superuserUrl,
-        dir: path.join(__dirname, '..', 'migrations'),
-        direction: 'up',
-        migrationsTable: 'pgmigrations',
-        singleTransaction: false,
-        log: () => {},
-      });
-    } catch (err) {
-      const message = String((err as Error)?.message ?? err);
-      if (!/extension "vector"|vector\.control|could not open extension control file/i.test(message)) {
-        throw err;
-      }
-    }
-
-    superuserClient = new Client({ connectionString: superuserUrl });
+    superuserClient = new Client({ connectionString: testSuperuserUrl(PORT) });
     await superuserClient.connect();
 
     process.env.DATABASE_URL = workerUrl;
@@ -212,8 +173,7 @@ describe('Milestone 4: Personal Baseline Engine / worker (real Postgres)', () =>
   afterAll(async () => {
     await superuserClient?.end();
     await db?.onModuleDestroy();
-    await pg?.stop();
-    fs.rmSync(dataDir, { recursive: true, force: true });
+    await teardownTestPostgres(pg, dataDir);
   });
 
   it('computes real mean/stddev/current_value/classification for a well-populated metric', async () => {

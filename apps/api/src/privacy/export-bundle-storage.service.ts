@@ -7,7 +7,6 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand,
   DeleteObjectsCommand,
   ListObjectVersionsCommand,
 } from '@aws-sdk/client-s3';
@@ -100,10 +99,9 @@ export class ExportBundleStorageService {
         ...(versions.DeleteMarkers ?? []),
       ].filter((v) => v.Key === key);
       if (toDelete.length === 0) return;
-      if (toDelete.length === 1) {
-        await this.s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key, VersionId: toDelete[0].VersionId }));
-        return;
-      }
+      // ponytail-audit, Milestone 8 follow-up: DeleteObjectsCommand handles
+      // a single-element Objects array identically to DeleteObjectCommand —
+      // no need for a separate branch/import for the count-of-1 case.
       await this.s3.send(
         new DeleteObjectsCommand({
           Bucket: bucket,
